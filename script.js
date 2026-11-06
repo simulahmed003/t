@@ -141,22 +141,55 @@ function closeAdminPanel() {
     showAdminPanel();
 }
 
-async function signInWithGoogle() {
+async function signInToAdmin() {
     const status = document.getElementById("admin-login-status");
     status.textContent = "";
+    const email = document.getElementById("admin-email").value.trim();
+    const password = document.getElementById("admin-password").value;
 
     try {
-        const { error } = await supabaseClient.auth.signInWithOAuth({
-            provider: "google",
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+            throw error;
+        }
+    } catch (error) {
+        status.textContent = error.message || "Could not sign in.";
+    }
+}
+
+async function createAdminAccount() {
+    const status = document.getElementById("admin-login-status");
+    status.textContent = "";
+    const email = document.getElementById("admin-email").value.trim();
+    const password = document.getElementById("admin-password").value;
+
+    if (password.length < 8) {
+        status.textContent = "Choose a password with at least 8 characters.";
+        return;
+    }
+
+    try {
+        const { data, error } = await supabaseClient.auth.signUp({
+            email,
+            password,
             options: {
-                redirectTo: `${window.location.origin}${window.location.pathname}?admin=1`
+                emailRedirectTo: `${window.location.origin}${window.location.pathname}?admin=1`
             }
         });
         if (error) {
             throw error;
         }
+
+        document.getElementById("admin-password").value = "";
+        status.classList.remove("text-red-600");
+        status.classList.add("text-teal-700");
+        status.textContent = data.session
+            ? "Account created. You are signed in."
+            : "Account created. Check your email and confirm the account, then return here and sign in.";
     } catch (error) {
-        status.textContent = error.message || "Could not start Google sign-in.";
+        status.classList.remove("text-teal-700");
+        status.classList.add("text-red-600");
+        status.textContent = error.message || "Could not create the account.";
     }
 }
 
@@ -170,9 +203,12 @@ async function updateAdminSession(session) {
 
     loginForm.classList.toggle("hidden-step", Boolean(adminAccessToken));
     responses.classList.toggle("hidden-step", !adminAccessToken);
-    if (adminAccessToken && (window.location.hash === "#admin" ||
-        new URLSearchParams(window.location.search).get("admin") === "1")) {
-        await loadAdminResponses();
+    if (adminAccessToken) {
+        document.getElementById("admin-password").value = "";
+        if (window.location.hash === "#admin" ||
+            new URLSearchParams(window.location.search).get("admin") === "1") {
+            await loadAdminResponses();
+        }
     }
 }
 
@@ -239,7 +275,8 @@ async function signOutAdmin() {
     }
 }
 
-document.getElementById("google-sign-in").addEventListener("click", signInWithGoogle);
+document.getElementById("admin-sign-in").addEventListener("click", signInToAdmin);
+document.getElementById("admin-create-account").addEventListener("click", createAdminAccount);
 window.addEventListener("hashchange", showAdminPanel);
 window.addEventListener("popstate", showAdminPanel);
 showAdminPanel();
