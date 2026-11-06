@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Question For You</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0fdfa; /* Soft teal background (medical vibe) */ font-family: 'Inter', sans-serif; }
+        .hidden-step { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-teal-500">
+        
+        <!-- Step 1 -->
+        <div id="step-1" class="step-container fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Question 1</h2>
+            <label class="block text-gray-600 mb-2">Your Last Name:</label>
+            <input type="text" id="ans-1" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Type here...">
+            <button onclick="checkStep1()" class="mt-4 w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Next</button>
+            <p id="err-1" class="text-red-500 mt-2 hidden text-sm">Incorrect. Try again.</p>
+        </div>
+
+        <!-- Step 2 -->
+        <div id="step-2" class="step-container hidden-step fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Question 2</h2>
+            <label class="block text-gray-600 mb-2">Are you feeling low or in an unusual situation? <br><span class="text-sm text-gray-400">(This may manipulate your decision or how you will react)</span></label>
+            <input type="text" id="ans-2" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Yes or No?">
+            <button onclick="checkStep2()" class="mt-4 w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Next</button>
+            <p id="err-2" class="text-red-500 mt-2 hidden text-sm">Please rethink. (Hint: the answer is No)</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div id="step-3" class="step-container hidden-step fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Question 3</h2>
+            <label class="block text-gray-600 mb-2">I will ignore it if I do not like this.</label>
+            <input type="text" id="ans-3" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Yes or No?">
+            <button onclick="checkStep3()" class="mt-4 w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Unlock</button>
+            <p id="err-3" class="text-red-500 mt-2 hidden text-sm">Incorrect.</p>
+        </div>
+
+        <!-- Unlock Reveal -->
+        <div id="step-reveal" class="step-container hidden-step fade-in">
+            <img src="assets/media/secure/hidden/secret.jpg" alt="Secret Image" class="w-full rounded-lg mb-6 shadow-md" onerror="this.src='https://via.placeholder.com/400x300?text=Please+Upload+secret.jpg'">
+            
+            <div class="prose prose-teal text-gray-700 leading-relaxed mb-8">
+                <p class="mb-4">I was thinking for so long whether I should or shouldn't tell you. Actually, I am very much afraid of hurting you, and your previous rejection story gave me a warning not to. The fact that you are so respectful to me makes me even more afraid that it will hurt you hard if things don't go well.</p>
+                <p>But from my perspective, there is no harm in asking. It is not obvious that both will feel the same. Even if they do feel the same, there may be many barriers or things that prevent them from getting into marriage.</p>
+            </div>
+
+            <button onclick="goToFeedback()" class="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Give Feedback</button>
+        </div>
+
+        <!-- Feedback Form -->
+        <div id="step-feedback" class="step-container hidden-step fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Your Response</h2>
+            <div class="space-y-3 mb-6">
+                <label class="flex items-start"><input type="radio" name="feedback" value="1" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">1. I warned you not to approach, so it ends here.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="2" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">2. It's okay that you approached, but I want you to stop right there; nothing will change.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="3" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">3. It's too late.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="4" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">4. We can discuss it further.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="5" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">5. I will try to make it happen, and we will discuss it further.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="6" id="radio-other" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">6. Other</span></label>
+                <textarea id="other-text" class="w-full p-3 mt-2 border border-gray-300 rounded-lg hidden focus:outline-none focus:border-teal-500" placeholder="Type your thoughts here..."></textarea>
+            </div>
+            <button onclick="submitFeedback()" class="w-full bg-teal-800 text-white font-semibold py-3 rounded-lg hover:bg-teal-900 transition">Submit Response</button>
+        </div>
+
+        <!-- Thank You -->
+        <div id="step-thanks" class="step-container hidden-step fade-in text-center py-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Thank You</h2>
+            <p class="text-gray-600">Your response has been recorded.</p>
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
