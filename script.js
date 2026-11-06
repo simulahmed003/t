@@ -3,7 +3,9 @@ const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_knGnGIY_7ugj8I9HyWJWGQ_9xg3kN0Y";
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const ADMIN_RECOVERY_URL = "https://simulahmed003.github.io/t/admin.html?reset=1";
 let adminAccessToken = null;
+let isPasswordRecovery = new URLSearchParams(window.location.search).get("reset") === "1";
 
 function getResponseSessionId() {
     let sessionId = localStorage.getItem(RESPONSE_SESSION_KEY);
@@ -131,9 +133,13 @@ async function submitFeedback() {
 
 function showAdminPanel() {
     const isAdminRoute = window.location.hash === "#admin" ||
-        new URLSearchParams(window.location.search).get("admin") === "1";
+        new URLSearchParams(window.location.search).get("admin") === "1" ||
+        new URLSearchParams(window.location.search).get("reset") === "1";
     document.getElementById("app-container").classList.toggle("hidden-step", isAdminRoute);
     document.getElementById("admin-panel").classList.toggle("hidden-step", !isAdminRoute);
+    if (isAdminRoute && new URLSearchParams(window.location.search).get("reset") === "1") {
+        showPasswordResetForm();
+    }
 }
 
 function closeAdminPanel() {
@@ -193,6 +199,66 @@ async function createAdminAccount() {
     }
 }
 
+async function requestAdminPasswordReset() {
+    const status = document.getElementById("admin-login-status");
+    status.classList.remove("text-teal-700");
+    status.classList.add("text-red-600");
+    status.textContent = "";
+    const email = document.getElementById("admin-email").value.trim();
+
+    try {
+        const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo: ADMIN_RECOVERY_URL
+        });
+        if (error) {
+            throw error;
+        }
+
+        status.classList.remove("text-red-600");
+        status.classList.add("text-teal-700");
+        status.textContent = "If an account exists for this address, Supabase will email a reset link. Check your inbox and spam folder.";
+    } catch (error) {
+        status.textContent = error.message || "Could not request a password reset.";
+    }
+}
+
+function showPasswordResetForm() {
+    document.getElementById("admin-login-form").classList.add("hidden-step");
+    document.getElementById("admin-reset-form").classList.remove("hidden-step");
+    document.getElementById("admin-responses").classList.add("hidden-step");
+}
+
+async function handleAdminPasswordReset(event) {
+    event.preventDefault();
+    const status = document.getElementById("admin-login-status");
+    status.classList.remove("text-teal-700");
+    status.classList.add("text-red-600");
+    status.textContent = "";
+    const password = document.getElementById("admin-new-password").value;
+
+    try {
+        const { error } = await supabaseClient.auth.updateUser({ password });
+        if (error) {
+            throw error;
+        }
+
+        document.getElementById("admin-new-password").value = "";
+        document.getElementById("admin-reset-form").classList.add("hidden-step");
+        document.getElementById("admin-login-form").classList.remove("hidden-step");
+        window.history.replaceState(null, "", `${window.location.pathname}?admin=1`);
+        isPasswordRecovery = false;
+        status.classList.remove("text-red-600");
+        status.classList.add("text-teal-700");
+        status.textContent = "Password updated. Sign in with your new password.";
+        const { error: signOutError } = await supabaseClient.auth.signOut();
+        if (signOutError) {
+            console.error("Password was updated, but the recovery session could not be cleared.", signOutError);
+        }
+    } catch (error) {
+        status.textContent = error.message || "Could not update the password. Request a fresh reset link and try again.";
+    }
+}
+
 async function updateAdminSession(session) {
     adminAccessToken = session?.access_token || null;
     const loginForm = document.getElementById("admin-login-form");
@@ -203,6 +269,10 @@ async function updateAdminSession(session) {
 
     loginForm.classList.toggle("hidden-step", Boolean(adminAccessToken));
     responses.classList.toggle("hidden-step", !adminAccessToken);
+    if (isPasswordRecovery) {
+        showPasswordResetForm();
+        return;
+    }
     if (adminAccessToken) {
         document.getElementById("admin-password").value = "";
         if (window.location.hash === "#admin" ||
@@ -277,10 +347,16 @@ async function signOutAdmin() {
 
 document.getElementById("admin-sign-in").addEventListener("click", signInToAdmin);
 document.getElementById("admin-create-account").addEventListener("click", createAdminAccount);
+document.getElementById("admin-forgot-password").addEventListener("click", requestAdminPasswordReset);
+document.getElementById("admin-reset-form").addEventListener("submit", handleAdminPasswordReset);
 window.addEventListener("hashchange", showAdminPanel);
 window.addEventListener("popstate", showAdminPanel);
 showAdminPanel();
 
-supabaseClient.auth.onAuthStateChange((_event, session) => {
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+        isPasswordRecovery = true;
+        showPasswordResetForm();
+    }
     void updateAdminSession(session);
 });

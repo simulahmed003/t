@@ -89,7 +89,16 @@
             <div class="flex flex-col gap-3">
                 <button id="admin-sign-in" type="button" class="w-full bg-teal-700 text-white font-semibold py-3 rounded-lg hover:bg-teal-800 transition">Sign in</button>
                 <button id="admin-create-account" type="button" class="w-full border border-teal-700 text-teal-800 font-semibold py-3 rounded-lg hover:bg-teal-50 transition">Create my website password</button>
+                <button id="admin-forgot-password" type="button" class="text-teal-700 underline">Forgot password?</button>
             </div>
+        </form>
+
+        <form id="admin-reset-form" class="hidden-step space-y-4 max-w-md">
+            <p class="text-gray-600">Choose a new website admin password.</p>
+            <label class="block text-gray-700">New password
+                <input id="admin-new-password" type="password" required minlength="8" autocomplete="new-password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg">
+            </label>
+            <button type="submit" class="w-full bg-teal-700 text-white font-semibold py-3 rounded-lg hover:bg-teal-800 transition">Set new password</button>
         </form>
 
         <div id="admin-responses" class="hidden-step">
