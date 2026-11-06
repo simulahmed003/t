@@ -1,29 +1,88 @@
-// TELEGRAM CONFIGURATION
-// IMPORTANT: keep the bot token and chat ID out of a public repo. This site is static, so the secure version should live in a backend service or environment variable.
-const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
-const TELEGRAM_CHAT_ID = "YOUR_CHAT_ID_HERE";
+const RESPONSE_LOG_KEY = "questionSiteResponseLog";
+const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
+const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_knGnGIY_7ugj8I9HyWJWGQ_9xg3kN0Y";
+let allResponsesSynced = true;
 
-async function sendTelegramNotification(message) {
-    const hasMissingConfig = !TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes("YOUR_BOT_TOKEN_HERE") ||
-        !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID.includes("YOUR_CHAT_ID_HERE");
+function getResponseSessionId() {
+    let sessionId = localStorage.getItem(RESPONSE_SESSION_KEY);
+    if (!sessionId) {
+        sessionId = crypto.randomUUID();
+        localStorage.setItem(RESPONSE_SESSION_KEY, sessionId);
+    }
+    return sessionId;
+}
 
-    if (hasMissingConfig) {
-        console.error("Telegram config is incomplete. Configure the bot token and chat ID before deploying the notification feature.");
+async function recordAnswer(question, answer) {
+    const entry = {
+        timestamp: new Date().toISOString(),
+        question,
+        answer
+    };
+
+    try {
+        const savedLog = localStorage.getItem(RESPONSE_LOG_KEY);
+        const entries = savedLog ? JSON.parse(savedLog) : [];
+        if (!Array.isArray(entries)) {
+            throw new Error("Saved response log is not a valid list.");
+        }
+
+        entries.push(entry);
+        localStorage.setItem(RESPONSE_LOG_KEY, JSON.stringify(entries));
+    } catch (error) {
+        console.error("Could not save the response in this browser.", error);
+    }
+
+    if (!SUPABASE_URL.startsWith("https://") || SUPABASE_URL.includes("YOUR_PROJECT_ID") ||
+        !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_PUBLISHABLE_KEY")) {
+        allResponsesSynced = false;
+        console.error("Supabase is not configured. This response is saved only in this browser.");
         return;
     }
 
-    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     try {
-        await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/responses`, {
+            method: "POST",
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Content-Type": "application/json",
+                "Prefer": "return=minimal"
+            },
             body: JSON.stringify({
-                chat_id: TELEGRAM_CHAT_ID,
-                text: message
+                session_id: getResponseSessionId(),
+                question,
+                answer
             })
         });
+
+        if (!response.ok) {
+            throw new Error(`Supabase returned HTTP ${response.status}: ${await response.text()}`);
+        }
     } catch (error) {
-        console.error("Failed to send Telegram message", error);
+        allResponsesSynced = false;
+        console.error("Could not send this response to Supabase. It remains in this browser's local log.", error);
+    }
+}
+
+function downloadResponseLog() {
+    try {
+        const savedLog = localStorage.getItem(RESPONSE_LOG_KEY);
+        const entries = savedLog ? JSON.parse(savedLog) : [];
+        if (!Array.isArray(entries) || entries.length === 0) {
+            alert("There are no saved answers to download in this browser.");
+            return;
+        }
+
+        const file = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(file);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `response-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Could not download the response log.", error);
+        alert("Could not access or download the saved response log from this browser.");
     }
 }
 
@@ -32,9 +91,9 @@ function showStep(stepId) {
     document.getElementById(stepId).classList.remove('hidden-step');
 }
 
-function checkStep1() {
+async function checkStep1() {
     const ans = document.getElementById('ans-1').value.trim().toLowerCase();
-    sendTelegramNotification(`Visitor answered Q1: "${ans}"`);
+    await recordAnswer("Question 1 (last name)", ans);
     if (ans === 'rimzim') {
         showStep('step-2');
     } else {
@@ -42,9 +101,9 @@ function checkStep1() {
     }
 }
 
-function checkStep2() {
+async function checkStep2() {
     const ans = document.getElementById('ans-2').value.trim().toLowerCase();
-    sendTelegramNotification(`Visitor answered Q2: "${ans}"`);
+    await recordAnswer("Question 2", ans);
     if (ans === 'no') {
         showStep('step-3');
     } else {
@@ -52,11 +111,10 @@ function checkStep2() {
     }
 }
 
-function checkStep3() {
+async function checkStep3() {
     const ans = document.getElementById('ans-3').value.trim().toLowerCase();
-    sendTelegramNotification(`Visitor answered Q3: "${ans}"`);
+    await recordAnswer("Question 3", ans);
     if (ans === 'yes' || ans === 'y') {
-        sendTelegramNotification(`SUCCESS: Visitor unlocked the secret image and message!`);
         showStep('step-reveal');
     } else {
         document.getElementById('err-3').classList.remove('hidden');
@@ -64,7 +122,6 @@ function checkStep3() {
 }
 
 function goToFeedback() {
-    sendTelegramNotification(`Visitor is now viewing the feedback form.`);
     showStep('step-feedback');
 }
 
@@ -79,7 +136,7 @@ document.querySelectorAll('input[name="feedback"]').forEach(radio => {
     });
 });
 
-function submitFeedback() {
+async function submitFeedback() {
     const selectedOption = document.querySelector('input[name="feedback"]:checked');
     if (!selectedOption) {
         alert("Please select an option");
@@ -91,6 +148,9 @@ function submitFeedback() {
         feedbackText = "Other: " + document.getElementById('other-text').value;
     }
 
-    sendTelegramNotification(`FINAL FEEDBACK SUBMITTED: ${feedbackText}`);
+    await recordAnswer("Final feedback", feedbackText);
     showStep('step-thanks');
+    document.getElementById('response-log-status').textContent = allResponsesSynced
+        ? "Your answers were sent to the response database. You can also download a copy saved in this browser."
+        : "Some or all answers were not sent to the response database. They may be available in this browser's local download.";
 }
