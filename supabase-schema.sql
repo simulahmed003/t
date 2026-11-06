@@ -11,6 +11,7 @@ alter table public.responses enable row level security;
 revoke all on public.responses from anon, authenticated;
 grant insert (session_id, question, answer) on public.responses to anon;
 grant select on public.responses to authenticated;
+grant delete on public.responses to authenticated;
 
 drop policy if exists "Allow anonymous response submissions" on public.responses;
 create policy "Allow anonymous response submissions"
@@ -23,5 +24,12 @@ drop policy if exists "Allow response admin to read submissions" on public.respo
 create policy "Allow response admin to read submissions"
     on public.responses
     for select
+    to authenticated
+    using ((auth.jwt() ->> 'email') = 'simulahmed003@gmail.com');
+
+drop policy if exists "Allow response admin to delete submissions" on public.responses;
+create policy "Allow response admin to delete submissions"
+    on public.responses
+    for delete
     to authenticated
     using ((auth.jwt() ->> 'email') = 'simulahmed003@gmail.com');

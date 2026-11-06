@@ -106,9 +106,18 @@
                 <p id="admin-status" class="text-gray-600" role="status" aria-live="polite"></p>
                 <div class="flex gap-3">
                     <button type="button" onclick="loadAdminResponses()" class="text-teal-700 underline">Refresh</button>
+                    <button id="show-clear-confirmation" type="button" onclick="showClearConfirmation()" class="text-red-700 underline">Clear all responses</button>
                     <button type="button" onclick="signOutAdmin()" class="text-teal-700 underline">Sign out</button>
                 </div>
             </div>
+            <form id="clear-responses-confirmation" class="hidden-step mb-4 rounded-lg border border-red-300 bg-red-50 p-4">
+                <p class="mb-3 text-sm text-red-800">This permanently deletes every response in Supabase and cannot be undone. Type <strong>DELETE ALL</strong> to confirm.</p>
+                <div class="flex flex-wrap gap-3">
+                    <input id="clear-confirmation-text" type="text" autocomplete="off" class="min-w-48 flex-1 rounded-lg border border-red-300 p-3" aria-label="Type DELETE ALL to confirm">
+                    <button type="submit" class="rounded-lg bg-red-700 px-4 py-3 font-semibold text-white hover:bg-red-800 transition">Delete all responses</button>
+                    <button type="button" onclick="cancelClearConfirmation()" class="rounded-lg border border-gray-300 px-4 py-3">Cancel</button>
+                </div>
+            </form>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>

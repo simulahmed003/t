@@ -331,6 +331,57 @@ async function loadAdminResponses() {
     }
 }
 
+function showClearConfirmation() {
+    if (!adminAccessToken) {
+        return;
+    }
+
+    document.getElementById("clear-responses-confirmation").classList.remove("hidden-step");
+    document.getElementById("show-clear-confirmation").classList.add("hidden-step");
+    document.getElementById("clear-confirmation-text").focus();
+}
+
+function cancelClearConfirmation() {
+    document.getElementById("clear-confirmation-text").value = "";
+    document.getElementById("clear-responses-confirmation").classList.add("hidden-step");
+    document.getElementById("show-clear-confirmation").classList.remove("hidden-step");
+}
+
+async function clearAllResponses(event) {
+    event.preventDefault();
+    const status = document.getElementById("admin-login-status");
+    const responseStatus = document.getElementById("admin-status");
+    status.textContent = "";
+    if (document.getElementById("clear-confirmation-text").value !== "DELETE ALL") {
+        responseStatus.textContent = "Type DELETE ALL exactly to confirm. No responses were deleted.";
+        return;
+    }
+
+    responseStatus.textContent = "Clearing responses...";
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/responses?id=gt.0`, {
+            method: "DELETE",
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${adminAccessToken}`,
+                "Prefer": "return=representation"
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Could not clear responses (HTTP ${response.status}). Apply the updated Supabase schema/policy and try again.`);
+        }
+
+        const deletedRows = await response.json();
+        document.getElementById("admin-response-rows").replaceChildren();
+        cancelClearConfirmation();
+        responseStatus.textContent = `${deletedRows.length} response${deletedRows.length === 1 ? "" : "s"} permanently deleted.`;
+    } catch (error) {
+        responseStatus.textContent = "";
+        status.textContent = error.message || "Could not clear responses.";
+    }
+}
+
 async function signOutAdmin() {
     document.getElementById("admin-response-rows").replaceChildren();
     document.getElementById("admin-status").textContent = "";
@@ -349,6 +400,7 @@ document.getElementById("admin-sign-in").addEventListener("click", signInToAdmin
 document.getElementById("admin-create-account").addEventListener("click", createAdminAccount);
 document.getElementById("admin-forgot-password").addEventListener("click", requestAdminPasswordReset);
 document.getElementById("admin-reset-form").addEventListener("submit", handleAdminPasswordReset);
+document.getElementById("clear-responses-confirmation").addEventListener("submit", clearAllResponses);
 window.addEventListener("hashchange", showAdminPanel);
 window.addEventListener("popstate", showAdminPanel);
 showAdminPanel();
