@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="0; url=./?admin=1">
     <title>Response Admin</title>
 </head>
 <body>
     <p>Opening the admin sign-in page. If you are not redirected, <a href="./?admin=1">continue here</a>.</p>
     <script>
-        window.location.replace("./?admin=1");
+        const destination = new URLSearchParams(window.location.search).get("reset") === "1"
+            ? "./?reset=1"
+            : "./?admin=1";
+        window.location.replace(destination);
     </script>
 </body>
 </html>
