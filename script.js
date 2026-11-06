@@ -369,7 +369,19 @@ async function clearAllResponses(event) {
             }
         });
         if (!response.ok) {
-            throw new Error(`Could not clear responses (HTTP ${response.status}). Apply the updated Supabase schema/policy and try again.`);
+            const responseBody = await response.text();
+            let detail = responseBody;
+            try {
+                const errorInfo = JSON.parse(responseBody);
+                detail = errorInfo.message || errorInfo.msg || responseBody;
+            } catch (parseError) {
+                console.error("Could not parse Supabase's response deletion error.", parseError);
+            }
+
+            const guidance = response.status === 401 || response.status === 403
+                ? " In Supabase SQL Editor, run the DELETE grant and admin delete policy from supabase-schema.sql, then retry."
+                : "";
+            throw new Error(`Could not clear responses (HTTP ${response.status}): ${detail}.${guidance}`);
         }
 
         const deletedRows = await response.json();
