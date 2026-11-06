@@ -2,7 +2,6 @@ const RESPONSE_LOG_KEY = "questionSiteResponseLog";
 const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_knGnGIY_7ugj8I9HyWJWGQ_9xg3kN0Y";
-let allResponsesSynced = true;
 
 function getResponseSessionId() {
     let sessionId = localStorage.getItem(RESPONSE_SESSION_KEY);
@@ -35,7 +34,6 @@ async function recordAnswer(question, answer) {
 
     if (!SUPABASE_URL.startsWith("https://") || SUPABASE_URL.includes("YOUR_PROJECT_ID") ||
         !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("YOUR_SUPABASE_PUBLISHABLE_KEY")) {
-        allResponsesSynced = false;
         console.error("Supabase is not configured. This response is saved only in this browser.");
         return;
     }
@@ -59,30 +57,7 @@ async function recordAnswer(question, answer) {
             throw new Error(`Supabase returned HTTP ${response.status}: ${await response.text()}`);
         }
     } catch (error) {
-        allResponsesSynced = false;
         console.error("Could not send this response to Supabase. It remains in this browser's local log.", error);
-    }
-}
-
-function downloadResponseLog() {
-    try {
-        const savedLog = localStorage.getItem(RESPONSE_LOG_KEY);
-        const entries = savedLog ? JSON.parse(savedLog) : [];
-        if (!Array.isArray(entries) || entries.length === 0) {
-            alert("There are no saved answers to download in this browser.");
-            return;
-        }
-
-        const file = new Blob([JSON.stringify(entries, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(file);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `response-log-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-        link.click();
-        URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error("Could not download the response log.", error);
-        alert("Could not access or download the saved response log from this browser.");
     }
 }
 
@@ -149,8 +124,5 @@ async function submitFeedback() {
     }
 
     await recordAnswer("Final feedback", feedbackText);
-    showStep('step-thanks');
-    document.getElementById('response-log-status').textContent = allResponsesSynced
-        ? "Your answers were sent to the response database. You can also download a copy saved in this browser."
-        : "Some or all answers were not sent to the response database. They may be available in this browser's local download.";
+    document.getElementById('app-container').classList.add('hidden-step');
 }
