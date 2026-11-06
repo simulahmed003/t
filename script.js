@@ -2,6 +2,7 @@ const RESPONSE_LOG_KEY = "questionSiteResponseLog";
 const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_knGnGIY_7ugj8I9HyWJWGQ_9xg3kN0Y";
+let adminAccessToken = null;
 
 function getResponseSessionId() {
     let sessionId = localStorage.getItem(RESPONSE_SESSION_KEY);
@@ -126,3 +127,114 @@ async function submitFeedback() {
     await recordAnswer("Final feedback", feedbackText);
     document.getElementById('app-container').classList.add('hidden-step');
 }
+
+function showAdminPanel() {
+    const isAdminRoute = window.location.hash === "#admin";
+    document.getElementById("app-container").classList.toggle("hidden-step", isAdminRoute);
+    document.getElementById("admin-panel").classList.toggle("hidden-step", !isAdminRoute);
+    if (!isAdminRoute) {
+        signOutAdmin();
+    }
+}
+
+function closeAdminPanel() {
+    window.location.hash = "";
+}
+
+async function handleAdminLogin(event) {
+    event.preventDefault();
+    const status = document.getElementById("admin-login-status");
+    status.textContent = "";
+    const email = document.getElementById("admin-email").value.trim();
+    const password = document.getElementById("admin-password").value;
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+            method: "POST",
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ email, password })
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.msg || result.message || "Sign-in failed. Check your email and password.");
+        }
+
+        adminAccessToken = result.access_token;
+        document.getElementById("admin-password").value = "";
+        document.getElementById("admin-login-form").classList.add("hidden-step");
+        document.getElementById("admin-responses").classList.remove("hidden-step");
+        await loadAdminResponses();
+    } catch (error) {
+        status.textContent = error.message || "Could not sign in.";
+    }
+}
+
+async function loadAdminResponses() {
+    if (!adminAccessToken) {
+        return;
+    }
+
+    const status = document.getElementById("admin-login-status");
+    const rows = document.getElementById("admin-response-rows");
+    status.textContent = "";
+    document.getElementById("admin-status").textContent = "Loading responses...";
+    rows.replaceChildren();
+
+    try {
+        const query = "select=id,session_id,created_at,question,answer&order=created_at.desc&limit=500";
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/responses?${query}`, {
+            headers: {
+                "apikey": SUPABASE_ANON_KEY,
+                "Authorization": `Bearer ${adminAccessToken}`
+            }
+        });
+        if (!response.ok) {
+            throw new Error(`Could not load responses (HTTP ${response.status}). Verify that this account is authorized in Supabase.`);
+        }
+
+        const entries = await response.json();
+        for (const entry of entries) {
+            const row = document.createElement("tr");
+            row.className = "border-b border-gray-200 align-top";
+            const submitted = document.createElement("td");
+            submitted.className = "p-3 whitespace-nowrap";
+            submitted.textContent = new Date(entry.created_at).toLocaleString();
+            const visitor = document.createElement("td");
+            visitor.className = "p-3 font-mono text-sm";
+            visitor.textContent = String(entry.session_id).slice(0, 8);
+            const question = document.createElement("td");
+            question.className = "p-3";
+            question.textContent = entry.question;
+            const answer = document.createElement("td");
+            answer.className = "p-3 whitespace-pre-wrap";
+            answer.textContent = entry.answer;
+            row.append(submitted, visitor, question, answer);
+            rows.append(row);
+        }
+        document.getElementById("admin-status").textContent = `${entries.length} response${entries.length === 1 ? "" : "s"} shown (up to 500).`;
+    } catch (error) {
+        document.getElementById("admin-status").textContent = "";
+        status.textContent = error.message || "Could not load responses.";
+    }
+}
+
+function signOutAdmin() {
+    adminAccessToken = null;
+    const loginForm = document.getElementById("admin-login-form");
+    const responses = document.getElementById("admin-responses");
+    if (loginForm && responses) {
+        loginForm.classList.remove("hidden-step");
+        responses.classList.add("hidden-step");
+        document.getElementById("admin-password").value = "";
+        document.getElementById("admin-response-rows").replaceChildren();
+        document.getElementById("admin-status").textContent = "";
+        document.getElementById("admin-login-status").textContent = "";
+    }
+}
+
+document.getElementById("admin-login-form").addEventListener("submit", handleAdminLogin);
+window.addEventListener("hashchange", showAdminPanel);
+showAdminPanel();

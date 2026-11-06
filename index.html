@@ -72,6 +72,48 @@
 
     </div>
 
+    <section id="admin-panel" class="hidden-step bg-white p-8 rounded-2xl shadow-xl w-full max-w-5xl border-t-4 border-teal-500">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Response admin</h1>
+            <button type="button" onclick="closeAdminPanel()" class="text-teal-700 underline">Back to site</button>
+        </div>
+
+        <form id="admin-login-form" class="space-y-4 max-w-md">
+            <p class="text-gray-600">Sign in with the authorized Supabase account to view submitted responses.</p>
+            <label class="block text-gray-700">Email
+                <input id="admin-email" type="email" required autocomplete="username" value="simulahmed003@gmail.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg">
+            </label>
+            <label class="block text-gray-700">Password
+                <input id="admin-password" type="password" required autocomplete="current-password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg">
+            </label>
+            <button type="submit" class="w-full bg-teal-700 text-white font-semibold py-3 rounded-lg hover:bg-teal-800 transition">Sign in</button>
+        </form>
+
+        <div id="admin-responses" class="hidden-step">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <p id="admin-status" class="text-gray-600" role="status" aria-live="polite"></p>
+                <div class="flex gap-3">
+                    <button type="button" onclick="loadAdminResponses()" class="text-teal-700 underline">Refresh</button>
+                    <button type="button" onclick="signOutAdmin()" class="text-teal-700 underline">Sign out</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-300 text-gray-600">
+                            <th class="p-3">Submitted</th>
+                            <th class="p-3">Visitor</th>
+                            <th class="p-3">Question</th>
+                            <th class="p-3">Response</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-response-rows"></tbody>
+                </table>
+            </div>
+        </div>
+        <p id="admin-login-status" class="mt-4 text-red-600" role="alert" aria-live="polite"></p>
+    </section>
+
     <script src="script.js"></script>
 </body>
 </html>
