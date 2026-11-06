@@ -2,6 +2,7 @@ const RESPONSE_LOG_KEY = "questionSiteResponseLog";
 const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_knGnGIY_7ugj8I9HyWJWGQ_9xg3kN0Y";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let adminAccessToken = null;
 
 function getResponseSessionId() {
@@ -129,46 +130,49 @@ async function submitFeedback() {
 }
 
 function showAdminPanel() {
-    const isAdminRoute = window.location.hash === "#admin";
+    const isAdminRoute = window.location.hash === "#admin" ||
+        new URLSearchParams(window.location.search).get("admin") === "1";
     document.getElementById("app-container").classList.toggle("hidden-step", isAdminRoute);
     document.getElementById("admin-panel").classList.toggle("hidden-step", !isAdminRoute);
-    if (!isAdminRoute) {
-        signOutAdmin();
-    }
 }
 
 function closeAdminPanel() {
-    window.location.hash = "";
+    window.history.replaceState(null, "", window.location.pathname);
+    showAdminPanel();
 }
 
-async function handleAdminLogin(event) {
-    event.preventDefault();
+async function signInWithGoogle() {
     const status = document.getElementById("admin-login-status");
     status.textContent = "";
-    const email = document.getElementById("admin-email").value.trim();
-    const password = document.getElementById("admin-password").value;
 
     try {
-        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
-            method: "POST",
-            headers: {
-                "apikey": SUPABASE_ANON_KEY,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email, password })
+        const { error } = await supabaseClient.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                redirectTo: `${window.location.origin}${window.location.pathname}?admin=1`
+            }
         });
-        const result = await response.json();
-        if (!response.ok) {
-            throw new Error(result.msg || result.message || "Sign-in failed. Check your email and password.");
+        if (error) {
+            throw error;
         }
-
-        adminAccessToken = result.access_token;
-        document.getElementById("admin-password").value = "";
-        document.getElementById("admin-login-form").classList.add("hidden-step");
-        document.getElementById("admin-responses").classList.remove("hidden-step");
-        await loadAdminResponses();
     } catch (error) {
-        status.textContent = error.message || "Could not sign in.";
+        status.textContent = error.message || "Could not start Google sign-in.";
+    }
+}
+
+async function updateAdminSession(session) {
+    adminAccessToken = session?.access_token || null;
+    const loginForm = document.getElementById("admin-login-form");
+    const responses = document.getElementById("admin-responses");
+    if (!loginForm || !responses) {
+        return;
+    }
+
+    loginForm.classList.toggle("hidden-step", Boolean(adminAccessToken));
+    responses.classList.toggle("hidden-step", !adminAccessToken);
+    if (adminAccessToken && (window.location.hash === "#admin" ||
+        new URLSearchParams(window.location.search).get("admin") === "1")) {
+        await loadAdminResponses();
     }
 }
 
@@ -221,20 +225,25 @@ async function loadAdminResponses() {
     }
 }
 
-function signOutAdmin() {
-    adminAccessToken = null;
-    const loginForm = document.getElementById("admin-login-form");
-    const responses = document.getElementById("admin-responses");
-    if (loginForm && responses) {
-        loginForm.classList.remove("hidden-step");
-        responses.classList.add("hidden-step");
-        document.getElementById("admin-password").value = "";
-        document.getElementById("admin-response-rows").replaceChildren();
-        document.getElementById("admin-status").textContent = "";
-        document.getElementById("admin-login-status").textContent = "";
+async function signOutAdmin() {
+    document.getElementById("admin-response-rows").replaceChildren();
+    document.getElementById("admin-status").textContent = "";
+    document.getElementById("admin-login-status").textContent = "";
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+        if (error) {
+            throw error;
+        }
+    } catch (error) {
+        document.getElementById("admin-login-status").textContent = error.message || "Could not sign out.";
     }
 }
 
-document.getElementById("admin-login-form").addEventListener("submit", handleAdminLogin);
+document.getElementById("google-sign-in").addEventListener("click", signInWithGoogle);
 window.addEventListener("hashchange", showAdminPanel);
+window.addEventListener("popstate", showAdminPanel);
 showAdminPanel();
+
+supabaseClient.auth.onAuthStateChange((_event, session) => {
+    void updateAdminSession(session);
+});
