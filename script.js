@@ -1,13 +1,17 @@
 // TELEGRAM CONFIGURATION
-// DO NOT SHARE THIS FILE PUBLICLY ON GITHUB ONCE CONFIGURED WITH SECRETS
-const TELEGRAM_BOT_TOKEN = "6317774952:AAGtbKmyzvBGKHC5vGLVVZbyYqj_kAJeEp4";
-const TELEGRAM_CHAT_ID = "@pyrate007_bot"; // <--- YOU MUST REPLACE THIS
+// IMPORTANT: keep the bot token and chat ID out of a public repo. This site is static, so the secure version should live in a backend service or environment variable.
+const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE";
+const TELEGRAM_CHAT_ID = "YOUR_CHAT_ID_HERE";
 
 async function sendTelegramNotification(message) {
-    if (TELEGRAM_CHAT_ID === "YOUR_CHAT_ID_HERE") {
-        console.error("Please add your Telegram Chat ID in script.js");
+    const hasMissingConfig = !TELEGRAM_BOT_TOKEN || TELEGRAM_BOT_TOKEN.includes("YOUR_BOT_TOKEN_HERE") ||
+        !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID.includes("YOUR_CHAT_ID_HERE");
+
+    if (hasMissingConfig) {
+        console.error("Telegram config is incomplete. Configure the bot token and chat ID before deploying the notification feature.");
         return;
     }
+
     const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
     try {
         await fetch(url, {
