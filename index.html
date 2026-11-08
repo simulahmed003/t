@@ -165,6 +165,20 @@
                     <tbody id="admin-response-rows"></tbody>
                 </table>
             </div>
+
+            <div class="mt-10 border-t border-gray-200 pt-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-2">Final message</h2>
+                <p class="text-sm text-gray-500 mb-4">Enter the passphrase to view the message and image exactly as she saw them.</p>
+                <div class="flex flex-wrap gap-3 mb-4">
+                    <input id="admin-passphrase" type="password" autocomplete="off" class="min-w-48 flex-1 rounded-lg border border-gray-300 p-3" aria-label="Passphrase">
+                    <button id="admin-view-message" type="button" class="rounded-lg bg-teal-600 px-4 py-3 font-semibold text-white hover:bg-teal-700 transition">View message</button>
+                </div>
+                <p id="admin-message-status" class="text-sm text-red-600 mb-3" role="alert"></p>
+                <div id="admin-message" class="hidden max-w-md">
+                    <img id="admin-message-image" alt="" class="w-full rounded-lg mb-6 shadow-md hidden">
+                    <div id="admin-message-text" class="text-gray-700 leading-relaxed"></div>
+                </div>
+            </div>
         </div>
         <p id="admin-login-status" class="mt-4 text-red-600" role="alert" aria-live="polite"></p>
     </section>

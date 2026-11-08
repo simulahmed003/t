@@ -1,5 +1,5 @@
 // Set to true to make the page available to visitors again. Admin keeps working either way.
-const SITE_LIVE = true;
+const SITE_LIVE = false;
 
 const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
@@ -466,3 +466,41 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     }
     void updateAdminSession(session);
 });
+
+
+// ---------- Admin: view the final message ----------
+async function viewMessageAsAdmin() {
+    const status = document.getElementById("admin-message-status");
+    status.textContent = "";
+    const pass = document.getElementById("admin-passphrase").value;
+    if (!pass.trim()) return;
+    let content = null;
+    try {
+        content = await tryDecrypt(pass);
+    } catch (e) {
+        status.textContent = "Couldn't load the message.";
+        return;
+    }
+    if (!content) {
+        status.textContent = "Wrong passphrase.";
+        return;
+    }
+    const img = document.getElementById("admin-message-image");
+    if (content.image) {
+        img.src = content.image;
+        img.alt = content.imageAlt || "";
+        img.classList.remove("hidden");
+    }
+    const box = document.getElementById("admin-message-text");
+    box.replaceChildren();
+    for (const para of content.message) {
+        const p = document.createElement("p");
+        p.className = "mb-4";
+        p.textContent = para;
+        box.appendChild(p);
+    }
+    document.getElementById("admin-message").classList.remove("hidden");
+    document.getElementById("admin-passphrase").value = "";
+}
+document.getElementById("admin-view-message").addEventListener("click", viewMessageAsAdmin);
+document.getElementById("admin-passphrase").addEventListener("keydown", e => { if (e.key === "Enter") viewMessageAsAdmin(); });
