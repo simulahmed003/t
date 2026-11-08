@@ -29,7 +29,7 @@
     <div id="app-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-teal-500">
 
         <!-- Step 1: passphrase -->
-        <div id="step-1" class="step-container fade-in">
+        <div id="step-1" class="step-container hidden-step fade-in">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Question 1</h2>
             <label for="ans-1" class="block text-gray-600 mb-2" id="passphrase-question">Your Last Name:</label>
             <input type="text" id="ans-1" autocomplete="off" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Type here...">
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Offline (SITE_LIVE = false) -->
-        <div id="step-offline" class="step-container hidden-step fade-in text-center">
+        <div id="step-offline" class="step-container fade-in text-center">
             <h2 class="text-xl font-bold text-gray-800 mb-4">Not available right now</h2>
             <p class="text-gray-600">This page isn't available at the moment.</p>
         </div>
@@ -184,6 +184,6 @@
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=20261108b"></script>
 </body>
 </html>

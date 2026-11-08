@@ -195,6 +195,7 @@ document.getElementById('btn-feedback').addEventListener('click', () => { logSte
 document.querySelectorAll('input[name="feedback"]').forEach(r => r.addEventListener('change', () => logStep("Feedback option selected (not submitted)", r.nextElementSibling.innerText.trim())));
 if (!(window.location.hash === "#admin" || new URLSearchParams(window.location.search).has("admin") || new URLSearchParams(window.location.search).has("reset"))) {
     if (SITE_LIVE) {
+        showStep('step-1');
         logStep("Visit", "Opened the page");
     } else {
         showStep('step-offline');
