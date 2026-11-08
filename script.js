@@ -1,5 +1,5 @@
 // Set to true to make the page available to visitors again. Admin keeps working either way.
-const SITE_LIVE = false;
+const SITE_LIVE = true;
 
 const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
