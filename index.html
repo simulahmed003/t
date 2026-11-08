@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Question For You</title>
+    <meta name="description" content="A private, multi-step question awaits.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://simulahmed003.github.io/t/">
+    <meta property="og:title" content="A Question For You">
+    <meta property="og:description" content="A private, multi-step question awaits.">
+    <meta property="og:image" content="https://simulahmed003.github.io/t/share-preview.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="A Question For You">
+    <meta name="twitter:description" content="A private, multi-step question awaits.">
+    <meta name="twitter:image" content="https://simulahmed003.github.io/t/share-preview.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f0fdfa; /* Soft teal background (medical vibe) */ font-family: 'Inter', sans-serif; }
+        .hidden-step { display: none; }
+        .fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app-container" class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-4 border-teal-500">
+
+        <!-- Step 1: passphrase -->
+        <div id="step-1" class="step-container fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Question 1</h2>
+            <label for="ans-1" class="block text-gray-600 mb-2" id="passphrase-question">Your Last Name:</label>
+            <input type="text" id="ans-1" autocomplete="off" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-teal-500" placeholder="Type here...">
+            <button id="btn-step-1" type="button" class="mt-4 w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Next</button>
+            <p id="err-1" class="text-red-500 mt-2 hidden text-sm" role="alert">That's not it. Try again.</p>
+        </div>
+
+        <!-- Step 2: feeling check -->
+        <div id="step-2" class="step-container hidden-step fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Question 2</h2>
+            <p class="text-gray-600 mb-4">Are you feeling low or in an unusual situation right now? <br><span class="text-sm text-gray-400">(It may affect how you feel about what comes next.)</span></p>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-low-yes" type="button" class="w-full border border-teal-600 text-teal-700 font-semibold py-3 rounded-lg hover:bg-teal-50 transition">Yes</button>
+                <button id="btn-low-no" type="button" class="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">No</button>
+            </div>
+        </div>
+
+        <!-- Not now -->
+        <div id="step-later" class="step-container hidden-step fade-in text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Then please come back another day</h2>
+            <p class="text-gray-600">This can wait. Take care of yourself first. The link will still work when you're ready.</p>
+        </div>
+
+        <!-- Step 3: disclaimer -->
+        <div id="step-3" class="step-container hidden-step fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Question 3</h2>
+            <p class="text-gray-600 mb-4">I will ignore it if I do not like this.<br><span class="text-sm text-gray-400">(There's only a 0.01% chance things will go well, so you can leave it here and not go further. I've already added a self-destruct protocol while developing this, which will remove it within 30 days.)</span></p>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-leave" type="button" class="w-full border border-teal-600 text-teal-700 font-semibold py-3 rounded-lg hover:bg-teal-50 transition">Leave it here</button>
+                <button id="btn-unlock" type="button" class="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Yes, continue</button>
+            </div>
+        </div>
+
+        <!-- Left -->
+        <div id="step-left" class="step-container hidden-step fade-in text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Okay</h2>
+            <p class="text-gray-600">Thank you for getting this far. Nothing changes between us.</p>
+        </div>
+
+        <!-- Reveal (content is decrypted in the browser) -->
+        <div id="step-reveal" class="step-container hidden-step fade-in">
+            <img id="reveal-image" alt="" class="w-full rounded-lg mb-6 shadow-md hidden">
+            <div id="reveal-message" class="prose prose-teal text-gray-700 leading-relaxed mb-8"></div>
+            <button id="btn-feedback" type="button" class="w-full bg-teal-600 text-white font-semibold py-3 rounded-lg hover:bg-teal-700 transition">Give Feedback</button>
+        </div>
+
+        <!-- Feedback -->
+        <div id="step-feedback" class="step-container hidden-step fade-in">
+            <h2 class="text-xl font-bold text-gray-800 mb-2">Your Response</h2>
+            <p class="text-sm text-gray-500 mb-4">Only the response you submit here will be sent to me. Nothing else you typed on this page is saved.</p>
+            <div class="space-y-3 mb-6">
+                <label class="flex items-start"><input type="radio" name="feedback" value="1" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">I'm sorry, but I can't see it this way. Let's leave it here.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="2" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">It's okay that you asked, but I'd like to stop here. We can stay as we are.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="3" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">I'm already committed, or my family is already considering someone.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="4" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">I need some time to think.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="5" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">We can discuss it further.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="6" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">I'm open to this. Let's talk about it more.</span></label>
+                <label class="flex items-start"><input type="radio" name="feedback" value="other" id="radio-other" class="mt-1 mr-3 text-teal-600"> <span class="text-gray-700">Other</span></label>
+                <textarea id="other-text" maxlength="2000" class="w-full p-3 mt-2 border border-gray-300 rounded-lg hidden focus:outline-none focus:border-teal-500" placeholder="Type your thoughts here..."></textarea>
+            </div>
+            <p id="err-feedback" class="text-red-500 mb-3 hidden text-sm" role="alert"></p>
+            <button id="btn-submit" type="button" class="w-full bg-teal-800 text-white font-semibold py-3 rounded-lg hover:bg-teal-900 transition">Submit Response</button>
+        </div>
+
+        <!-- Thank you -->
+        <div id="step-thanks" class="step-container hidden-step fade-in text-center">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Thank you</h2>
+            <p class="text-gray-600">Thank you for reading this. Whatever you chose, I respect it.</p>
+        </div>
+
+    </div>
+    <section id="admin-panel" class="hidden-step bg-white p-8 rounded-2xl shadow-xl w-full max-w-5xl border-t-4 border-teal-500">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Response admin</h1>
+            <button type="button" onclick="closeAdminPanel()" class="text-teal-700 underline">Back to site</button>
+        </div>
+
+        <form id="admin-login-form" class="space-y-4 max-w-md">
+            <p class="text-gray-600">Sign in to view responses. Only <strong>simulahmed003@gmail.com</strong> is currently authorized to view submissions.</p>
+            <label class="block text-gray-700">Email
+                <input id="admin-email" type="email" required autocomplete="username" value="simulahmed003@gmail.com" class="mt-1 w-full p-3 border border-gray-300 rounded-lg">
+            </label>
+            <label class="block text-gray-700">Website password
+                <input id="admin-password" type="password" required minlength="8" autocomplete="current-password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg">
+            </label>
+            <div class="flex flex-col gap-3">
+                <button id="admin-sign-in" type="button" class="w-full bg-teal-700 text-white font-semibold py-3 rounded-lg hover:bg-teal-800 transition">Sign in</button>
+                <button id="admin-forgot-password" type="button" class="text-teal-700 underline">Forgot password?</button>
+            </div>
+        </form>
+
+        <form id="admin-reset-form" class="hidden-step space-y-4 max-w-md">
+            <p class="text-gray-600">Choose a new website admin password.</p>
+            <label class="block text-gray-700">New password
+                <input id="admin-new-password" type="password" required minlength="8" autocomplete="new-password" class="mt-1 w-full p-3 border border-gray-300 rounded-lg">
+            </label>
+            <button type="submit" class="w-full bg-teal-700 text-white font-semibold py-3 rounded-lg hover:bg-teal-800 transition">Set new password</button>
+        </form>
+
+        <div id="admin-responses" class="hidden-step">
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                <p id="admin-status" class="text-gray-600" role="status" aria-live="polite"></p>
+                <div class="flex gap-3">
+                    <button type="button" onclick="loadAdminResponses()" class="text-teal-700 underline">Refresh</button>
+                    <button id="show-clear-confirmation" type="button" onclick="showClearConfirmation()" class="text-red-700 underline">Clear all responses</button>
+                    <button type="button" onclick="signOutAdmin()" class="text-teal-700 underline">Sign out</button>
+                </div>
+            </div>
+            <form id="clear-responses-confirmation" class="hidden-step mb-4 rounded-lg border border-red-300 bg-red-50 p-4">
+                <p class="mb-3 text-sm text-red-800">This permanently deletes every response in Supabase and cannot be undone. Type <strong>DELETE ALL</strong> to confirm.</p>
+                <div class="flex flex-wrap gap-3">
+                    <input id="clear-confirmation-text" type="text" autocomplete="off" class="min-w-48 flex-1 rounded-lg border border-red-300 p-3" aria-label="Type DELETE ALL to confirm">
+                    <button type="submit" class="rounded-lg bg-red-700 px-4 py-3 font-semibold text-white hover:bg-red-800 transition">Delete all responses</button>
+                    <button type="button" onclick="cancelClearConfirmation()" class="rounded-lg border border-gray-300 px-4 py-3">Cancel</button>
+                </div>
+            </form>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-gray-300 text-gray-600">
+                            <th class="p-3">Submitted</th>
+                            <th class="p-3">Visitor</th>
+                            <th class="p-3">Question</th>
+                            <th class="p-3">Response</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-response-rows"></tbody>
+                </table>
+            </div>
+        </div>
+        <p id="admin-login-status" class="mt-4 text-red-600" role="alert" aria-live="polite"></p>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>

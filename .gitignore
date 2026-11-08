@@ -1,0 +1,4 @@
+# Never commit the plain message or image; only payload.json.
+message.json
+*.jpg
+*.jpeg
