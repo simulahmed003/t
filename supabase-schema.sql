@@ -38,3 +38,7 @@ create policy "Allow response admin to delete submissions"
 alter table public.responses
     add constraint responses_question_final check (question = 'Final feedback'),
     add constraint responses_answer_length check (char_length(answer) between 1 and 2100);
+
+-- Step-by-step events are now logged too (the page tells the visitor).
+alter table public.responses drop constraint if exists responses_question_final;
+alter table public.responses add constraint responses_question_length check (char_length(question) between 1 and 200);

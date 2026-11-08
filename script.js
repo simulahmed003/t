@@ -60,7 +60,16 @@ function getResponseSessionId() {
     return sessionId;
 }
 
-// Only the final response is ever sent.
+// Best-effort log of each step. Never blocks or breaks the page.
+function logStep(question, answer) {
+    fetch(`${SUPABASE_URL}/rest/v1/responses`, {
+        method: "POST",
+        headers: { "apikey": SUPABASE_ANON_KEY, "Content-Type": "application/json", "Prefer": "return=minimal" },
+        body: JSON.stringify({ session_id: getResponseSessionId(), question, answer: String(answer).slice(0, 2000) || "(empty)" }),
+        keepalive: true
+    }).catch(e => console.error("Could not log step.", e));
+}
+
 async function recordFinalResponse(answer) {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/responses`, {
         method: "POST",
@@ -109,6 +118,7 @@ async function checkStep1() {
     }
     btn.disabled = false;
     btn.textContent = "Next";
+    logStep("Q1 last name", (revealed ? "[correct] " : "[wrong] ") + input.value.trim());
     if (revealed) {
         input.value = "";
         showStep('step-2');
@@ -135,6 +145,7 @@ function revealContent() {
         box.appendChild(p);
     }
     showStep('step-reveal');
+    logStep("Message", "Opened and reading the message");
 }
 
 async function submitFeedback() {
@@ -173,11 +184,15 @@ async function submitFeedback() {
 
 document.getElementById('btn-step-1').addEventListener('click', checkStep1);
 document.getElementById('ans-1').addEventListener('keydown', e => { if (e.key === 'Enter') checkStep1(); });
-document.getElementById('btn-low-yes').addEventListener('click', () => showStep('step-later'));
-document.getElementById('btn-low-no').addEventListener('click', () => showStep('step-3'));
-document.getElementById('btn-leave').addEventListener('click', () => showStep('step-left'));
-document.getElementById('btn-unlock').addEventListener('click', revealContent);
-document.getElementById('btn-feedback').addEventListener('click', () => showStep('step-feedback'));
+document.getElementById('btn-low-yes').addEventListener('click', () => { logStep("Q2 feeling low", "Yes (sent to come back later)"); showStep('step-later'); });
+document.getElementById('btn-low-no').addEventListener('click', () => { logStep("Q2 feeling low", "No"); showStep('step-3'); });
+document.getElementById('btn-leave').addEventListener('click', () => { logStep("Q3 continue?", "Leave it here"); showStep('step-left'); });
+document.getElementById('btn-unlock').addEventListener('click', () => { logStep("Q3 continue?", "Yes, continue"); revealContent(); });
+document.getElementById('btn-feedback').addEventListener('click', () => { logStep("Message", "Finished reading, went to feedback"); showStep('step-feedback'); });
+document.querySelectorAll('input[name="feedback"]').forEach(r => r.addEventListener('change', () => logStep("Feedback option selected (not submitted)", r.nextElementSibling.innerText.trim())));
+if (!(window.location.hash === "#admin" || new URLSearchParams(window.location.search).has("admin") || new URLSearchParams(window.location.search).has("reset"))) {
+    logStep("Visit", "Opened the page");
+}
 document.getElementById('btn-submit').addEventListener('click', submitFeedback);
 document.querySelectorAll('input[name="feedback"]').forEach(radio => {
     radio.addEventListener('change', () => {
@@ -312,7 +327,6 @@ async function loadAdminResponses() {
     const rows = document.getElementById("admin-response-rows");
     status.textContent = "";
     document.getElementById("admin-status").textContent = "Loading responses...";
-    rows.replaceChildren();
 
     try {
         const query = "select=id,session_id,created_at,question,answer&order=created_at.desc&limit=500";
@@ -327,6 +341,7 @@ async function loadAdminResponses() {
         }
 
         const entries = await response.json();
+        rows.replaceChildren();
         for (const entry of entries) {
             const row = document.createElement("tr");
             row.className = "border-b border-gray-200 align-top";
