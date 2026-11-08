@@ -1,3 +1,6 @@
+// Set to true to make the page available to visitors again. Admin keeps working either way.
+const SITE_LIVE = false;
+
 const RESPONSE_SESSION_KEY = "questionSiteResponseSession";
 const SUPABASE_URL = "https://zcvncodkygqzvyfiddip.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_knGnGIY_7ugj8I9HyWJWGQ_9xg3kN0Y";
@@ -191,7 +194,11 @@ document.getElementById('btn-unlock').addEventListener('click', () => { logStep(
 document.getElementById('btn-feedback').addEventListener('click', () => { logStep("Message", "Finished reading, went to feedback"); showStep('step-feedback'); });
 document.querySelectorAll('input[name="feedback"]').forEach(r => r.addEventListener('change', () => logStep("Feedback option selected (not submitted)", r.nextElementSibling.innerText.trim())));
 if (!(window.location.hash === "#admin" || new URLSearchParams(window.location.search).has("admin") || new URLSearchParams(window.location.search).has("reset"))) {
-    logStep("Visit", "Opened the page");
+    if (SITE_LIVE) {
+        logStep("Visit", "Opened the page");
+    } else {
+        showStep('step-offline');
+    }
 }
 document.getElementById('btn-submit').addEventListener('click', submitFeedback);
 document.querySelectorAll('input[name="feedback"]').forEach(radio => {
